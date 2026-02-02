@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pinhan Box Premium</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Playfair+Display:ital@0;1&display=swap"
+        rel="stylesheet">
+    <style>
+        /* --- VISUAL IDENTITY (PREMIUM LOOK) --- */
+        :root {
+            --bg-dark: #050505;
+            --gold-gradient: linear-gradient(135deg, #FFD700, #DAA520, #B8860B);
+            --burgundy: #4a0404;
+            --glass: rgba(255, 255, 255, 0.05);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-dark);
+            background-image: radial-gradient(circle at center, #1a0b0b 0%, #000000 90%);
+            color: #FFD700;
+            font-family: 'Cinzel', serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        /* Particles */
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iMSIgaGVpZ2h0PSIxIiBmaWxsPSIjRkZENzAwIiBmaWxsLW9wYWNpdHk9IjAuNSIvPjwvc3ZnPg==');
+            opacity: 0.4;
+            animation: drift 20s linear infinite;
+        }
+
+        @keyframes drift {
+            from {
+                background-position: 0 0;
+            }
+
+            to {
+                background-position: 0 100px;
+            }
+        }
+
+        .screen {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        /* --- THE VAULT (GATEKEEPER) --- */
+        #gate-screen {
+            z-index: 20;
+        }
+
+        .vault-box {
+            background: var(--glass);
+            border: 1px solid #333;
+            border-top: 1px solid #555;
+            padding: 40px 30px;
+            border-radius: 20px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.9), inset 0 0 20px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(15px);
+            max-width: 320px;
+            width: 80%;
+        }
+
+        .digital-input {
+            background: #000;
+            border: 2px solid #333;
+            color: #FFD700;
+            font-family: 'Courier New', monospace;
+            font-size: 32px;
+            letter-spacing: 8px;
+            text-align: center;
+            width: 100%;
+            padding: 15px 0;
+            border-radius: 8px;
+            outline: none;
+            margin: 20px 0;
+            transition: 0.3s;
+        }
+
+        .digital-input:focus {
+            border-color: #DAA520;
+            box-shadow: 0 0 20px rgba(218, 165, 32, 0.2);
+        }
+
+        .gold-btn {
+            background: var(--gold-gradient);
+            border: none;
+            padding: 15px 0;
+            width: 100%;
+            color: #1a0b0b;
+            font-family: 'Cinzel', serif;
+            font-weight: bold;
+            font-size: 16px;
+            border-radius: 50px;
+            cursor: pointer;
+            letter-spacing: 2px;
+            box-shadow: 0 0 25px rgba(218, 165, 32, 0.3);
+            transition: transform 0.2s;
+        }
+
+        .gold-btn:active {
+            transform: scale(0.96);
+        }
+
+        /* --- THE WHEEL --- */
+        #wheel-screen {
+            display: none;
+            z-index: 10;
+        }
+
+        .wheel-container {
+            position: relative;
+            width: 340px;
+            height: 340px;
+            filter: drop-shadow(0 0 40px rgba(0, 0, 0, 0.8));
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .center-gem {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 76px;
+            height: 76px;
+            background: #000;
+            border-radius: 50%;
+            border: 3px solid #DAA520;
+            box-shadow: 0 0 25px rgba(218, 165, 32, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 5;
+            overflow: hidden;
+        }
+
+        .center-gem img {
+            width: 85%;
+            height: auto;
+            object-fit: contain;
+        }
+
+        .indicator {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 35px solid #FFF;
+            filter: drop-shadow(0 4px 4px #000);
+            z-index: 20;
+        }
+
+        /* --- RESULT POPUP --- */
+        #result-screen {
+            display: none;
+            z-index: 30;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(8px);
+        }
+
+        .gift-card {
+            background: #fff;
+            color: #000;
+            width: 80%;
+            max-width: 300px;
+            padding: 30px 20px;
+            border: 8px solid #DAA520;
+            box-shadow: 0 0 60px rgba(218, 165, 32, 0.5);
+            transform: scale(0.8);
+            animation: popIn 0.6s forwards;
+        }
+
+        .prize-display {
+            font-size: 26px;
+            font-weight: bold;
+            color: #800020;
+            margin: 20px 0;
+            text-transform: uppercase;
+        }
+
+        @keyframes popIn {
+            to {
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="particles"></div>
+
+    <div id="gate-screen" class="screen">
+        <div class="vault-box">
+            <div style="font-size: 12px; letter-spacing: 4px; color: #888; margin-bottom:10px;">SECURITY ACCESS</div>
+            <input type="tel" id="access-code" class="digital-input" placeholder="CODE" maxlength="6">
+            <button id="unlock-btn" class="gold-btn">UNLOCK VAULT</button>
+        </div>
+    </div>
+
+    <div id="wheel-screen" class="screen">
+        <h2 style="font-weight: normal; letter-spacing: 5px; font-size: 18px; margin-bottom: 30px; opacity: 0.8;">PINHAN
+            EXCLUSIVE</h2>
+        <div class="wheel-container">
+            <div class="indicator"></div>
+            <canvas id="wheel-canvas" width="680" height="680"></canvas>
+            <div class="center-gem"><img src="logo.png" alt="Logo" onerror="this.style.display='none'"></div>
+        </div>
+        <button id="spin-btn" class="gold-btn" style="margin-top: 50px; width: 220px;">AYLANTIRISH</button>
+    </div>
+
+    <div id="result-screen" class="screen">
+        <div class="gift-card">
+            <div
+                style="font-family: 'Playfair Display', serif; font-style: italic; font-size: 24px; color: #555; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                Tabriknoma</div>
+            <p style="font-size: 14px; color: #666;">Hurmatli Mijoz, sizning yutug'ingiz:</p>
+            <div class="prize-display" id="prize-text">...</div>
+            <button id="claim-btn" class="gold-btn" style="font-size: 14px; padding: 12px;">YUTUQNI OLISH</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const gateScreen = document.getElementById('gate-screen');
+            const wheelScreen = document.getElementById('wheel-screen');
+            const resultScreen = document.getElementById('result-screen');
+            const canvas = document.getElementById('wheel-canvas');
+            const ctx = canvas.getContext('2d');
+
+            // --- STRATEGIK YUTUQLAR (WEIGHTED) ---
+            const segments = [
+                { text: "30% CHEGIRMA", color: "#800020", textCol: "#FFD700", weight: 40 },
+                { text: "OMAD KELMADI", color: "#111", textCol: "#555", weight: 1 },
+                { text: "SWEET BONUS", color: "#DAA520", textCol: "#000", weight: 20 },
+                { text: "YANA BIR BOR", color: "#800020", textCol: "#FFD700", weight: 15, action: 'spin_again' },
+                { text: "VIP STATUS", color: "#111", textCol: "#DAA520", weight: 5 },
+                { text: "OMAD KELMADI", color: "#800020", textCol: "#000", weight: 1 },
+                { text: "50% CHEGIRMA", color: "#DAA520", textCol: "#000", weight: 15 },
+                { text: "90% JACKPOT", color: "#FFF", textCol: "#000", weight: 0.1 }
+            ];
+
+            const totalSegments = segments.length;
+            const arc = (2 * Math.PI) / totalSegments;
+            let startAngle = 0; let spinTimeout = null;
+            let spinAngleStart = 10; let spinTime = 0; let spinTimeTotal = 0; let isSpinning = false;
+
+            // --- ACCESS CODE ---
+            document.getElementById('unlock-btn').addEventListener('click', () => {
+                if (document.getElementById('access-code').value.length >= 3) {
+                    gateScreen.style.opacity = '0';
+                    setTimeout(() => { gateScreen.style.display = 'none'; wheelScreen.style.display = 'flex'; drawWheel(); }, 800);
+                } else { alert("Kod kiriting!"); }
+            });
+
+            // --- DRAW WHEEL ---
+            function drawWheel() {
+                const centerX = canvas.width / 2; const centerY = canvas.height / 2;
+                const outsideRadius = 320; const textRadius = 230; const insideRadius = 70;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                segments.forEach((seg, i) => {
+                    const angle = startAngle + i * arc;
+                    ctx.fillStyle = seg.color; ctx.beginPath();
+                    ctx.arc(centerX, centerY, outsideRadius, angle, angle + arc, false);
+                    ctx.arc(centerX, centerY, insideRadius, angle + arc, angle, true);
+                    ctx.stroke(); ctx.fill();
+                    ctx.save();
+                    ctx.shadowColor = "black"; ctx.shadowBlur = 4; ctx.fillStyle = seg.textCol;
+                    ctx.translate(centerX + Math.cos(angle + arc / 2) * textRadius, centerY + Math.sin(angle + arc / 2) * textRadius);
+                    ctx.rotate(angle + arc / 2 + Math.PI / 2);
+                    ctx.font = 'bold 26px Cinzel';
+                    const text = seg.text.split(' ');
+                    if (text.length > 1) { ctx.fillText(text[0], -ctx.measureText(text[0]).width / 2, -18); ctx.fillText(text[1], -ctx.measureText(text[1]).width / 2, 22); }
+                    else { ctx.fillText(seg.text, -ctx.measureText(seg.text).width / 2, 5); }
+                    ctx.restore();
+                });
+            }
+
+            // --- SPIN ---
+            document.getElementById('spin-btn').addEventListener('click', () => {
+                if (isSpinning) return; isSpinning = true; spinTime = 0; spinTimeTotal = Math.random() * 3000 + 4000; rotateWheel();
+            });
+
+            function rotateWheel() {
+                spinTime += 30;
+                if (spinTime >= spinTimeTotal) { stopRotateWheel(); return; }
+                const spinAngle = spinAngleStart - easeOut(spinTime, 0, spinAngleStart, spinTimeTotal);
+                startAngle += (spinAngle * Math.PI / 180); drawWheel(); spinTimeout = setTimeout(rotateWheel, 30);
+            }
+
+            function stopRotateWheel() {
+                clearTimeout(spinTimeout);
+                const wonItem = getWeightedPrize();
+                if (wonItem.action === 'spin_again') { setTimeout(() => { alert("Yana bir bor! 🔄"); isSpinning = false; }, 500); return; }
+                setTimeout(() => {
+                    wheelScreen.style.opacity = '0';
+                    setTimeout(() => {
+                        wheelScreen.style.display = 'none'; resultScreen.style.display = 'flex';
+                        document.getElementById('prize-text').innerText = wonItem.text;
+                    }, 500);
+                }, 1000);
+                document.getElementById('claim-btn').onclick = () => {
+                    if (window.Telegram && window.Telegram.WebApp) { window.Telegram.WebApp.sendData(wonItem.text); }
+                    else { alert("Yutuq: " + wonItem.text); }
+                };
+            }
+
+            function easeOut(t, b, c, d) { const ts = (t /= d) * t; const tc = ts * t; return b + c * (tc + -3 * ts + 3 * t); }
+            function getWeightedPrize() {
+                const totalWeight = segments.reduce((sum, p) => sum + p.weight, 0);
+                let random = Math.random() * totalWeight;
+                for (let i = 0; i < segments.length; i++) { if (random < segments[i].weight) return segments[i]; random -= segments[i].weight; }
+                return segments[0];
+            }
+        });
+    </script>
+</body>
+
+</html>
