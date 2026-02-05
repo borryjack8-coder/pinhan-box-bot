@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pinhan Box - V2.1</title> <!-- Version bump for cache check -->
+    <title>Pinhan Box - V2.2</title> <!-- Safe Init Version -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Playfair+Display:ital@0;1&display=swap"
@@ -45,7 +45,6 @@
             text-align: left;
             padding: 5px;
             display: none;
-            /* Hidden by default, shown on error */
         }
 
         .screen {
@@ -68,10 +67,8 @@
         .wheel-container {
             position: relative;
             width: 90vw;
-            /* Responsive Width */
             max-width: 350px;
             height: 90vw;
-            /* Keep aspect ratio */
             max-height: 350px;
             margin-bottom: 30px;
             filter: drop-shadow(0 0 25px rgba(212, 175, 55, 0.2));
@@ -103,7 +100,6 @@
             left: 50%;
             transform: translate(-50%, -50%);
             width: 20%;
-            /* Relative size */
             height: 20%;
             background: #000;
             border-radius: 50%;
@@ -177,12 +173,11 @@
     <div id="wheel-screen" class="screen">
         <h2
             style="font-weight: normal; letter-spacing: 4px; font-size: 16px; margin-bottom: 20px; opacity: 0.7; color: #DAA520;">
-            PINHAN V2.0
+            PINHAN V2.2
         </h2>
 
         <div class="wheel-container" id="wheel-container">
             <div class="indicator"></div>
-            <!-- Canvas is resized via JS now -->
             <canvas id="wheel-canvas"></canvas>
             <div class="center-gem">
                 <img src="logo.png" alt="Logo" onerror="this.style.display='none'">
@@ -218,8 +213,15 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             try {
-                const tg = window.Telegram.webapp;
-                tg.expand();
+                // --- SAFE TELEGRAM INIT ---
+                let tg = null;
+                if (window.Telegram && window.Telegram.WebApp) {
+                    tg = window.Telegram.WebApp;
+                    tg.expand();
+                    console.log("Telegram WebApp Initialized");
+                } else {
+                    logError("Warning: Telegram WebApp not detected");
+                }
 
                 const canvas = document.getElementById('wheel-canvas');
                 const container = document.getElementById('wheel-container');
@@ -228,25 +230,17 @@
                 const wheelScreen = document.getElementById('wheel-screen');
                 const resultScreen = document.getElementById('result-screen');
 
-                // --- CANVAS SIZING FIX (CRITICAL) ---
+                // --- CANVAS SIZING FIX ---
                 function resizeCanvas() {
                     const rect = container.getBoundingClientRect();
-                    // Double resolution for Retina screens
                     const dpr = window.devicePixelRatio || 1;
-
                     canvas.width = rect.width * dpr;
                     canvas.height = rect.height * dpr;
-
-                    // Scale context to match
                     ctx.scale(dpr, dpr);
-                    logError(`Canvas Resized: ${canvas.width}x${canvas.height} (DPR: ${dpr})`);
                     drawWheel();
                 }
 
-                // Initial size logic
-                setTimeout(() => {
-                    resizeCanvas();
-                }, 100); // Slight delay for layout to settle
+                setTimeout(resizeCanvas, 100);
 
                 // --- DATA ---
                 const segments = [
@@ -264,17 +258,15 @@
                 const arc = (2 * Math.PI) / totalSegments;
                 let startAngle = 0;
                 let isSpinning = false;
-                let spinTimeout = null;
 
                 // --- DRAWING ---
                 function drawWheel() {
                     try {
-                        const w = container.getBoundingClientRect().width;
-                        const h = container.getBoundingClientRect().height;
+                        const rect = container.getBoundingClientRect();
+                        const w = rect.width;
+                        const h = rect.height;
                         const centerX = w / 2;
                         const centerY = h / 2;
-
-                        // Radii relative to size
                         const outsideRadius = (w / 2) - 5;
                         const textRadius = (w / 2) * 0.7;
                         const insideRadius = (w / 2) * 0.25;
@@ -283,13 +275,11 @@
 
                         segments.forEach((seg, i) => {
                             const angle = startAngle + i * arc;
-
                             ctx.beginPath();
                             ctx.arc(centerX, centerY, outsideRadius, angle, angle + arc, false);
                             ctx.arc(centerX, centerY, insideRadius, angle + arc, angle, true);
                             ctx.fillStyle = seg.color;
                             ctx.fill();
-
                             ctx.lineWidth = 2;
                             ctx.strokeStyle = "#DAA520";
                             ctx.stroke();
@@ -297,15 +287,16 @@
                             ctx.save();
                             ctx.translate(centerX + Math.cos(angle + arc / 2) * textRadius, centerY + Math.sin(angle + arc / 2) * textRadius);
                             ctx.rotate(angle + arc / 2 + Math.PI / 2);
-
                             ctx.fillStyle = seg.textColor;
-                            // Adapt font size to wheel size
                             const fontSize = Math.floor(w * 0.05);
                             ctx.font = `bold ${fontSize}px Cinzel`;
                             const text = seg.text;
                             ctx.fillText(text, -ctx.measureText(text).width / 2, 0);
                             ctx.restore();
                         });
+
+                        // If we got here, drawing succeeded. 
+                        // We can hide debug log if it only contains the resize message (optional)
                     } catch (e) {
                         logError("Draw Error: " + e.message);
                     }
@@ -315,7 +306,6 @@
                 spinBtn.addEventListener('click', () => {
                     if (isSpinning) return;
                     isSpinning = true;
-                    // Simple Spin Logic
                     let spinTime = 0;
                     let spinTimeTotal = Math.random() * 2000 + 3000;
                     let spinAngleStart = 20;
@@ -327,7 +317,7 @@
                             return;
                         }
                         const p = spinTime / spinTimeTotal;
-                        const spinAngle = spinAngleStart * (1 - p); // Linear-ish decay
+                        const spinAngle = spinAngleStart * (1 - p);
                         startAngle += (spinAngle * Math.PI / 180);
                         drawWheel();
                         requestAnimationFrame(rotate);
@@ -349,10 +339,10 @@
 
                     document.getElementById('claim-btn').onclick = () => {
                         const data = JSON.stringify({ action: 'claim_prize', prize: wonItem.text });
-                        if (window.Telegram && window.Telegram.WebApp) {
-                            window.Telegram.WebApp.sendData(data);
+                        if (tg) {
+                            tg.sendData(data);
                         } else {
-                            logError("Data Sent (Dev): " + data);
+                            alert("Yutuq: " + wonItem.text);
                         }
                     };
                 }
@@ -366,8 +356,15 @@
                     return segments[0];
                 }
 
-                // Force draw once
                 drawWheel();
+
+                // Hide debug log if no fatal errors occurred
+                setTimeout(() => {
+                    const debugEl = document.getElementById('debug-log');
+                    if (debugEl.innerText.indexOf('Error') === -1) {
+                        debugEl.style.display = 'none';
+                    }
+                }, 2000);
 
             } catch (err) {
                 logError("Init Error: " + err.message);
