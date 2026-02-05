@@ -69,42 +69,10 @@
             transition: opacity 0.8s ease, transform 0.8s ease;
         }
 
-        /* --- THE VAULT (GATEKEEPER) --- */
-        #gate-screen {
-            z-index: 20;
-        }
-
-        .vault-box {
-            background: var(--glass);
-            border: 1px solid #333;
-            border-top: 1px solid #555;
-            padding: 40px 30px;
-            border-radius: 20px;
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.9), inset 0 0 20px rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(15px);
-            max-width: 320px;
-            width: 80%;
-        }
-
-        .digital-input {
-            background: #000;
-            border: 2px solid #333;
-            color: #FFD700;
-            font-family: 'Courier New', monospace;
-            font-size: 32px;
-            letter-spacing: 8px;
-            text-align: center;
-            width: 100%;
-            padding: 15px 0;
-            border-radius: 8px;
-            outline: none;
-            margin: 20px 0;
-            transition: 0.3s;
-        }
-
-        .digital-input:focus {
-            border-color: #DAA520;
-            box-shadow: 0 0 20px rgba(218, 165, 32, 0.2);
+        /* --- THE WHEEL (DEFAULT SCREEN) --- */
+        #wheel-screen {
+            display: flex;
+            z-index: 10;
         }
 
         .gold-btn {
@@ -125,12 +93,6 @@
 
         .gold-btn:active {
             transform: scale(0.96);
-        }
-
-        /* --- THE WHEEL --- */
-        #wheel-screen {
-            display: none;
-            z-index: 10;
         }
 
         .wheel-container {
@@ -223,14 +185,6 @@
 <body>
     <div class="particles"></div>
 
-    <div id="gate-screen" class="screen">
-        <div class="vault-box">
-            <div style="font-size: 12px; letter-spacing: 4px; color: #888; margin-bottom:10px;">SECURITY ACCESS</div>
-            <input type="tel" id="access-code" class="digital-input" placeholder="CODE" maxlength="6">
-            <button id="unlock-btn" class="gold-btn">UNLOCK VAULT</button>
-        </div>
-    </div>
-
     <div id="wheel-screen" class="screen">
         <h2 style="font-weight: normal; letter-spacing: 5px; font-size: 18px; margin-bottom: 30px; opacity: 0.8;">PINHAN
             EXCLUSIVE</h2>
@@ -255,7 +209,9 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const gateScreen = document.getElementById('gate-screen');
+            const tg = window.Telegram.webapp;
+            tg.expand();
+
             const wheelScreen = document.getElementById('wheel-screen');
             const resultScreen = document.getElementById('result-screen');
             const canvas = document.getElementById('wheel-canvas');
@@ -278,13 +234,7 @@
             let startAngle = 0; let spinTimeout = null;
             let spinAngleStart = 10; let spinTime = 0; let spinTimeTotal = 0; let isSpinning = false;
 
-            // --- ACCESS CODE ---
-            document.getElementById('unlock-btn').addEventListener('click', () => {
-                if (document.getElementById('access-code').value.length >= 3) {
-                    gateScreen.style.opacity = '0';
-                    setTimeout(() => { gateScreen.style.display = 'none'; wheelScreen.style.display = 'flex'; drawWheel(); }, 800);
-                } else { alert("Kod kiriting!"); }
-            });
+            drawWheel();
 
             // --- DRAW WHEEL ---
             function drawWheel() {
@@ -325,16 +275,24 @@
                 clearTimeout(spinTimeout);
                 const wonItem = getWeightedPrize();
                 if (wonItem.action === 'spin_again') { setTimeout(() => { alert("Yana bir bor! 🔄"); isSpinning = false; }, 500); return; }
+
                 setTimeout(() => {
                     wheelScreen.style.opacity = '0';
                     setTimeout(() => {
-                        wheelScreen.style.display = 'none'; resultScreen.style.display = 'flex';
+                        wheelScreen.style.display = 'none';
+                        resultScreen.style.display = 'flex';
                         document.getElementById('prize-text').innerText = wonItem.text;
                     }, 500);
                 }, 1000);
+
                 document.getElementById('claim-btn').onclick = () => {
-                    if (window.Telegram && window.Telegram.WebApp) { window.Telegram.WebApp.sendData(wonItem.text); }
-                    else { alert("Yutuq: " + wonItem.text); }
+                    const data = JSON.stringify({ action: 'claim_prize', prize: wonItem.text });
+                    if (window.Telegram && window.Telegram.WebApp) {
+                        window.Telegram.WebApp.sendData(data);
+                    } else {
+                        // Fallback for local testing
+                        alert("Data Sent: " + data);
+                    }
                 };
             }
 
